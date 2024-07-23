@@ -1,48 +1,32 @@
-// Import Files
-import express from "express";
-
-// Database
-import "./db/connection.js";
-
-// Schemas Import
-import Users from "./models/Users.js";
-
-// Port
-const PORT = 8000 || process.env.PORT;
-
-// Apps
-const app = express();
-
-// Middleware
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
-
-// Routes
-app.get("/", (req, res) => {
-  res.send("Welcome to server");
+const app = require("express")();
+const server = require("http").createServer(app);
+const { Server } = require("socket.io");
+const io = new Server(server, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true,
+  },
 });
 
-app.post("api/register", async (req, res) => {
-  try {
-    const { fullName, email, password } = req.body;
+const PORT = 8000;
 
-    if (!fullName || !email || !password) {
-      res.status(400).send("Please fill all required fields");
-    } else {
-      const isAlreadyExist = await Users.findOne({ email });
-      if (isAlreadyExist) {
-        res.status(400).send("User already exists");
-      } else {
-        const newUser = new Users({
-          fullName: fullName,
-          email: email,
-          password: password,
-        });
-      }
-    }
-  } catch (error) {}
+// Socket.io
+io.on("connection", (socket) => {
+  // console.log("User start connection ", socket.id);
+
+  socket.on("chat", (payload) => {
+    // console.log("Payload: ", payload);
+    io.emit("chat", payload);
+  });
 });
 
-app.listen(PORT, () => {
-  console.log(`Server is running to port ${PORT}`);
+// app.use(express.static(path.resolve("./public")));
+
+// app.get("/", (req, res) => {
+//   return res.sendFile("/public/index.html");
+// });
+
+server.listen(PORT, () => {
+  console.log(`Server is running to port http://localhost:${PORT}`);
 });
